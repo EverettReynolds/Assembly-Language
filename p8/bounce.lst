@@ -1,0 +1,219 @@
+     1                                  ; Everett Reynolds
+     2                                  ; P8: Bounce
+     3                                  ; 11-7-20
+     4                                  ; Graphical Infinite Bouncing on Screens
+     5                                  
+     6                                  
+     7                                  
+     8                                  
+     9                                  
+    10                                  %macro  Print 2
+    11                                          pusha
+    12                                  	mov ebx,%1
+    13                                  	mov ecx,%2
+    14                                  	push ebx
+    15                                  	push ecx
+    16                                          mov eax,4
+    17                                  	mov ecx,ebx
+    18                                          mov ebx,1
+    19                                  	mov edx,%2
+    20                                          int 80h
+    21                                          popa
+    22                                  %endmacro
+    23                                  
+    24                                  %macro  setCursor 2
+    25                                          pusha
+    26                                          mov     ah,%1
+    27                                          mov     al,%2
+    28                                          call    _cursor
+    29                                          popa
+    30                                  %endmacro
+    31                                  
+    32                                  
+    33                                  
+    34                                  SECTION .data
+    35                                  ; define data/variables here.  Think DB, DW, DD, DQ
+    36 00000000 20                      message:	db	" "  ;;; one space
+    37 00000001 457665727964617920-     		db	"Everyday I Wake Up. *Cries* "
+    38 0000000A 492057616B65205570-
+    39 00000013 2E202A43726965732A-
+    40 0000001C 20                 
+    41 0000001D 20                      		db	" "  ;;; one more space
+    42 0000001E 1B5B324A                cls:		db 	1bh,'[2J'
+    43 00000022 04000000                clsLen 	        dd      $-cls
+    44 00000026 1B5B                    pos:		db	1bh, '['
+    45 00000028 3030                    row:		db	'00'
+    46 0000002A 3B                      		db      ';'
+    47 0000002B 3030                    col:		db 	'00'
+    48 0000002D 48                      		db	'H'
+    49                                  msglen:	EQU	($-message)
+    50 0000002E 00                      currentColumn:	db 	0
+    51                                  
+    52 0000002F 21                      maximumColumn: 	db 	79-msglen
+    53                                   
+    54                                  
+    55                                  SECTION .bss
+    56                                  ; define uninitialized data here
+    57                                  
+    58                                  SECTION .text
+    59                                  global _main,_clrscr,_forward,_backward,_sleep,_cursor
+    60                                  _main:
+    61                                  
+    62                                  ; put your code here.
+    63                                  
+    64 00000000 E83A010000              call _clrscr
+    65                                  break1:
+    66                                  setCursor 10, [currentColumn]
+    67 00000005 60                  <1>  pusha
+    68 00000006 B40A                <1>  mov ah,%1
+    69 00000008 A0[2E000000]        <1>  mov al,%2
+    70 0000000D E8E2000000          <1>  call _cursor
+    71 00000012 61                  <1>  popa
+    72                                  break2:
+    73                                  Print message, msglen
+    74 00000013 60                  <1>  pusha
+    75 00000014 BB[00000000]        <1>  mov ebx,%1
+    76 00000019 B92E000000          <1>  mov ecx,%2
+    77 0000001E 53                  <1>  push ebx
+    78 0000001F 51                  <1>  push ecx
+    79 00000020 B804000000          <1>  mov eax,4
+    80 00000025 89D9                <1>  mov ecx,ebx
+    81 00000027 BB01000000          <1>  mov ebx,1
+    82 0000002C BA2E000000          <1>  mov edx,%2
+    83 00000031 CD80                <1>  int 80h
+    84 00000033 61                  <1>  popa
+    85                                  break3:
+    86                                  
+    87                                  infinite:
+    88 00000034 E813000000              	call _forward
+    89                                  	
+    90 00000039 E85A000000              	call _backward
+    91                                  	break4:
+    92 0000003E EBF4                    	jmp infinite
+    93                                  	
+    94                                  
+    95                                  
+    96                                  ; Normal termination code
+    97 00000040 B801000000              mov eax, 1
+    98 00000045 BB00000000              mov ebx, 0
+    99 0000004A CD80                    int 80h
+   100                                  
+   101                                  
+   102                                  _forward:
+   103 0000004C 60                      	 pusha
+   104 0000004D FE05[2E000000]                  inc BYTE[currentColumn]
+   105 00000053 8A25[2F000000]                  mov ah,[maximumColumn]
+   106 00000059 3825[2E000000]                  cmp [currentColumn],ah
+   107 0000005F 7D05                            jge skip1
+   108 00000061 E87A000000                      call _sleep
+   109                                  skip1:
+   110                                          setCursor 10, [currentColumn]
+   111 00000066 60                  <1>  pusha
+   112 00000067 B40A                <1>  mov ah,%1
+   113 00000069 A0[2E000000]        <1>  mov al,%2
+   114 0000006E E881000000          <1>  call _cursor
+   115 00000073 61                  <1>  popa
+   116                                          Print message, msglen
+   117 00000074 60                  <1>  pusha
+   118 00000075 BB[00000000]        <1>  mov ebx,%1
+   119 0000007A B92E000000          <1>  mov ecx,%2
+   120 0000007F 53                  <1>  push ebx
+   121 00000080 51                  <1>  push ecx
+   122 00000081 B804000000          <1>  mov eax,4
+   123 00000086 89D9                <1>  mov ecx,ebx
+   124 00000088 BB01000000          <1>  mov ebx,1
+   125 0000008D BA2E000000          <1>  mov edx,%2
+   126 00000092 CD80                <1>  int 80h
+   127 00000094 61                  <1>  popa
+   128 00000095 61                              popa
+   129 00000096 EBB4                            jmp _forward
+   130                                  
+   131                                  
+   132                                  _backward:
+   133 00000098 60                              pusha
+   134 00000099 FE0D[2E000000]                  dec BYTE[currentColumn]
+   135 0000009F B400                            mov ah,0
+   136 000000A1 3825[2E000000]                  cmp [currentColumn],ah
+   137 000000A7 7E05                            jle skip2
+   138 000000A9 E832000000                      call _sleep
+   139                                  skip2:
+   140                                          setCursor 10, [currentColumn]
+   141 000000AE 60                  <1>  pusha
+   142 000000AF B40A                <1>  mov ah,%1
+   143 000000B1 A0[2E000000]        <1>  mov al,%2
+   144 000000B6 E839000000          <1>  call _cursor
+   145 000000BB 61                  <1>  popa
+   146                                          Print message, msglen
+   147 000000BC 60                  <1>  pusha
+   148 000000BD BB[00000000]        <1>  mov ebx,%1
+   149 000000C2 B92E000000          <1>  mov ecx,%2
+   150 000000C7 53                  <1>  push ebx
+   151 000000C8 51                  <1>  push ecx
+   152 000000C9 B804000000          <1>  mov eax,4
+   153 000000CE 89D9                <1>  mov ecx,ebx
+   154 000000D0 BB01000000          <1>  mov ebx,1
+   155 000000D5 BA2E000000          <1>  mov edx,%2
+   156 000000DA CD80                <1>  int 80h
+   157 000000DC 61                  <1>  popa
+   158 000000DD 61                              popa
+   159 000000DE EBB8                            jmp _backward
+   160                                  	
+   161                                  
+   162                                  
+   163                                  _sleep:
+   164 000000E0 60                              pusha
+   165 000000E1 B8A2000000                      mov     eax,162
+   166 000000E6 BB[58010000]                    mov     ebx,sec
+   167 000000EB B900000000                      mov     ecx,0
+   168 000000F0 CD80                            int     80h
+   169 000000F2 61                              popa
+   170 000000F3 C3                              ret
+   171                                  
+   172                                  
+   173                                  
+   174                                  
+   175                                  _cursor:
+   176 000000F4 60                              pusha
+   177                                  
+   178 000000F5 50                              push    eax
+   179                                  
+   180 000000F6 66C1E808                        shr     ax,8    
+   181 000000FA B30A                            mov     bl,10
+   182 000000FC F6F3                            div     bl      
+   183 000000FE 80C430                          add     ah,'0'
+   184 00000101 0430                            add     al,'0'
+   185 00000103 A2[28000000]                    mov     BYTE [row],al
+   186 00000108 8825[29000000]                  mov     BYTE [row+1],ah
+   187                                  
+   188 0000010E 58                              pop     eax     
+   189 0000010F 6625FF00                        and     ax,0FFh 
+   190 00000113 B30A                            mov     bl,10
+   191 00000115 F6F3                            div     bl      
+   192 00000117 80C430                          add     ah,'0'
+   193 0000011A 0430                            add     al,'0'
+   194 0000011C A2[2B000000]                    mov     BYTE [col],al
+   195 00000121 8825[2C000000]                  mov     BYTE [col+1],ah
+   196                                  
+   197                                          
+   198 00000127 B804000000                      mov     eax,4
+   199 0000012C BB01000000                      mov     ebx,1
+   200 00000131 B9[26000000]                    mov     ecx,pos
+   201 00000136 BA08000000                      mov     edx,8
+   202 0000013B CD80                            int     80h
+   203                                  
+   204 0000013D 61                              popa
+   205 0000013E C3                              ret
+   206                                  
+   207                                  _clrscr:
+   208 0000013F 60                      	pusha
+   209 00000140 B804000000                      mov     eax,4
+   210 00000145 BB01000000                      mov     ebx,1
+   211 0000014A B9[1E000000]                    mov     ecx,cls
+   212 0000014F BA04000000                      mov     edx,4
+   213 00000154 CD80                            int     80h
+   214 00000156 61                              popa
+   215 00000157 C3                              ret
+   216                                  
+   217                                  
+   218 00000158 0100000000000000        sec: 	dd 	1,0
+   219                                  

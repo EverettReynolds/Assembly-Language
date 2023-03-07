@@ -1,2 +1,3 @@
-# CSC322
-Assembly Language (NASM) Class Fall 2020
+# fall2020csc322
+
+This is an Assembly Language project probably?
